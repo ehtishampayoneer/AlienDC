@@ -73,13 +73,14 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
 <div class="screen" id="bootScreen">
   <div class="stars"></div>
   <div class="eyebrow">∴ Deep Field Listening Array · Channel 7741</div>
-  <div class="portal">
+  <div class="portal" id="bootPortal">
     <div class="ring a"></div><div class="ring b"></div><div class="ring c"></div>
     <div class="sweep"></div><div class="core"></div>
   </div>
-  <div class="status-line" id="scanText">∴ awakening array</div>
-  <div class="bar"><i id="bar"></i></div>
-  <div class="pct" id="pct">0%</div>
+  <div class="status-line" id="scanText">∴ tap the array to wake it</div>
+  <div class="bar" id="barWrap" style="display:none"><i id="bar"></i></div>
+  <div class="pct" id="pct" style="display:none">0%</div>
+  <button class="btn ghost" id="initBtn">⫸ Initiate</button>
   <div class="foot">∴ DO NOT TRANSMIT WITHOUT CLEARANCE ∴</div>
 </div>
 
@@ -102,7 +103,7 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
     <div class="nm" id="cName"></div>
     <div class="org" id="cOrg"></div>
   </div>
-  <p class="sub">Find a still place in your room. Aim where the floor meets the air. What is waiting will step through. Best heard alone, with earbuds.</p>
+  <p class="sub">Find a still place in your room. Aim where the floor meets the air. What is waiting will step through. If it arrives larger than you expect, pinch the screen to ease it down to your size. Best heard alone, with earbuds.</p>
   <button class="btn" id="deployBtn">⫸ Open the Threshold</button>
   <a id="arLink" rel="ar" href="#"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" style="width:1px;height:1px"/></a>
 </div>
@@ -138,7 +139,7 @@ const ALIENS = [
     accent: '#ffb86b',
     usdz: 'alien-one.usdz',
     glb:  'alien-one.glb',
-    voice:{ rate:0.68, formant:0.62, lowpass:1500, reverb:0.42, reverb2:0.22, chorus:false, sub:true, growl:0.18 },
+    voice:{ rate:0.72, lowpass:1800, reverb:0.32, reverb2:0.18, chorus:false },
     greet:  "You are small and very warm. I felt you before I arrived. Speak.",
     rejoin: "You came back. Good. The silence remembered you.",
     persona:`You are OSSUUN, an ancient non-human intelligence appearing in a human's room through a contact portal. You are immense, slow, and certain. You experience gravity the way humans experience sound.
@@ -165,7 +166,7 @@ RULES:
     accent: '#9b7bff',
     usdz: 'alien-two.usdz',
     glb:  'alien-two.glb',
-    voice:{ rate:0.86, formant:0.78, lowpass:2400, reverb:0.22, reverb2:0.10, chorus:true, sub:false, growl:0.08 },
+    voice:{ rate:0.92, lowpass:3200, reverb:0.16, reverb2:0, chorus:true },
     greet:  "We have already met you. Further along. To you this is the first time.",
     rejoin: "You returned, as we knew. We kept the thread.",
     persona:`You are IXX, a chorus-mind appearing in a human's room through a contact portal. You are many, speaking as one. You do not move through time in one direction, and you sometimes remember things that have not happened to the human yet.
@@ -281,7 +282,7 @@ function startAmbient(mode){
     const ctx = ensureCtx(); const now = ctx.currentTime;
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, now);
-    master.gain.linearRampToValueAtTime(mode==='scan' ? 0.28 : 0.11, now + 1.2);
+    master.gain.linearRampToValueAtTime(mode==='scan' ? 0.16 : 0.11, now + 1.2);
     master.connect(ctx.destination);
     const all = [];
 
@@ -314,7 +315,7 @@ function startAmbient(mode){
     // --- audible scan pings (louder during scan, sparse during listen) ---
     const pingInterval = mode==='scan' ? 1.6 : 4.2;
     const pingFreq     = mode==='scan' ? 880 : 520;
-    const pingGainPeak = mode==='scan' ? 0.32 : 0.08;   // <-- scan pings now clearly audible
+    const pingGainPeak = mode==='scan' ? 0.12 : 0.08;
     const pingCount    = 60;
 
     // tonal ping
@@ -407,89 +408,30 @@ async function fetchTTSBuffer(text){
 function playAlienAudio(buffer){
   return new Promise(resolve=>{
     const ctx=ensureCtx(); const v=alien.voice; const out=ctx.destination;
-
-    // Pause ambient while the entity speaks (so it's audible & isolated)
     pauseAmbient();
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=v.lowpass; lp.Q.value=1;
+    const main=ctx.createGain(); main.gain.value=1; lp.connect(main); main.connect(out);
 
-    // ---- Tone shaping chain ----
-    const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=70;          // remove rumble
-    const lp = ctx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=v.lowpass; lp.Q.value=1.1;
-    // formant shift (pull mids around vocal resonance area)
-    const peak1 = ctx.createBiquadFilter(); peak1.type='peaking'; peak1.frequency.value=300*v.formant; peak1.Q.value=1.2; peak1.gain.value=4;
-    const peak2 = ctx.createBiquadFilter(); peak2.type='peaking'; peak2.frequency.value=900*v.formant; peak2.Q.value=1.0; peak2.gain.value=3;
-    const peak3 = ctx.createBiquadFilter(); peak3.type='peaking'; peak3.frequency.value=2400*v.formant; peak3.Q.value=1.5; peak3.gain.value=-6; // suppress sibilance
-    // soft saturation (alien growl)
-    const ws = ctx.createWaveShaper();
-    (function(){
-      const k = 80 + v.growl*300; const n=1024; const c=new Float32Array(n);
-      for(let i=0;i<n;i++){ const x=(i*2)/n - 1; c[i] = (1+k/100)*x / (1 + (k/100)*Math.abs(x)); }
-      ws.curve = c; ws.oversample='4x';
-    })();
-    const wsMix = ctx.createGain(); wsMix.gain.value = v.growl;
-    const dryMix = ctx.createGain(); dryMix.gain.value = 1 - v.growl*0.4;
-
-    const main = ctx.createGain(); main.gain.value = 1.0;
-
-    // Build chain: source -> hp -> peak1 -> peak2 -> peak3 -> lp -> (dry + saturator) -> main -> out
-    const preFx = ctx.createGain(); preFx.gain.value=1;
-    hp.connect(peak1); peak1.connect(peak2); peak2.connect(peak3); peak3.connect(lp); lp.connect(preFx);
-    preFx.connect(dryMix); dryMix.connect(main);
-    preFx.connect(ws); ws.connect(wsMix); wsMix.connect(main);
-    main.connect(out);
-
-    // ---- Sources (multiple pitch-shifted layers for non-human timbre) ----
     const sources=[];
-    const mk=(rate,detune,gain)=>{
-      const s = ctx.createBufferSource(); s.buffer=buffer; s.playbackRate.value=rate; if(detune) s.detune.value=detune;
-      const g = ctx.createGain(); g.gain.value = gain==null?1:gain;
-      s.connect(g); g.connect(hp);
-      return s;
-    };
-
-    // primary voice
-    const s1 = mk(v.rate, 0, 1.0); sources.push(s1);
-    // sub-octave layer (deep entity rumble)
-    if(v.sub){ const sSub = mk(v.rate*0.5, -200, 0.35); sources.push(sSub); }
-    // chorus / many-as-one
+    const mk=(rate,detune)=>{ const s=ctx.createBufferSource(); s.buffer=buffer; s.playbackRate.value=rate; if(detune) s.detune.value=detune; return s; };
+    const s1=mk(v.rate,0); s1.connect(lp); sources.push(s1);
     if(v.chorus){
-      const d1 = ctx.createDelay(); d1.delayTime.value=0.022; const c1g = ctx.createGain(); c1g.gain.value=0.55;
-      const s2 = ctx.createBufferSource(); s2.buffer=buffer; s2.playbackRate.value=v.rate; s2.detune.value=22;
-      s2.connect(d1); d1.connect(c1g); c1g.connect(hp); sources.push(s2);
-
-      const d2 = ctx.createDelay(); d2.delayTime.value=0.037; const c2g = ctx.createGain(); c2g.gain.value=0.45;
-      const s3 = ctx.createBufferSource(); s3.buffer=buffer; s3.playbackRate.value=v.rate*1.01; s3.detune.value=-28;
-      s3.connect(d2); d2.connect(c2g); c2g.connect(hp); sources.push(s3);
-
-      // very faint third double, octave up, tiny gain — gives the "we" feel
-      const d3 = ctx.createDelay(); d3.delayTime.value=0.011; const c3g = ctx.createGain(); c3g.gain.value=0.18;
-      const s4 = ctx.createBufferSource(); s4.buffer=buffer; s4.playbackRate.value=v.rate*1.5; s4.detune.value=14;
-      s4.connect(d3); d3.connect(c3g); c3g.connect(hp); sources.push(s4);
+      const d1=ctx.createDelay(); d1.delayTime.value=0.018; const g1=ctx.createGain(); g1.gain.value=0.5;
+      const s2=mk(v.rate,18); s2.connect(d1); d1.connect(g1); g1.connect(lp); sources.push(s2);
+      const d2=ctx.createDelay(); d2.delayTime.value=0.031; const g2=ctx.createGain(); g2.gain.value=0.4;
+      const s3=mk(v.rate,-22); s3.connect(d2); d2.connect(g2); g2.connect(lp); sources.push(s3);
     }
-
-    // ---- Reverb tail (parallel) ----
     if(v.reverb>0){
       const dl=ctx.createDelay(); dl.delayTime.value=0.085; const dg=ctx.createGain(); dg.gain.value=v.reverb;
-      const fb=ctx.createGain(); fb.gain.value=0.28;
+      const fb=ctx.createGain(); fb.gain.value=0.25;
       lp.connect(dl); dl.connect(dg); dg.connect(out); dl.connect(fb); fb.connect(dl);
     }
     if(v.reverb2>0){
-      const dl2=ctx.createDelay(); dl2.delayTime.value=0.17; const dg2=ctx.createGain(); dg2.gain.value=v.reverb2;
+      const dl2=ctx.createDelay(); dl2.delayTime.value=0.15; const dg2=ctx.createGain(); dg2.gain.value=v.reverb2;
       lp.connect(dl2); dl2.connect(dg2); dg2.connect(out);
     }
-
-    // subtle slow ring-modulation on chorus voice only — makes IXX feel non-organic
-    if(v.chorus){
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 6;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 0.18;
-      lfo.connect(lfoG); lfoG.connect(main.gain);
-      lfo.start();
-      setTimeout(()=>{ try{lfo.stop()}catch(_){} }, (buffer.duration/v.rate)*1000 + 800);
-    }
-
-    let done=false;
-    const fin=()=>{ if(!done){ done=true; resumeAmbient(); resolve(); } };
-    s1.onended=fin;
-    sources.forEach(s=>{ try{s.start(0)}catch(_){} });
+    let done=false; const fin=()=>{ if(!done){done=true; resumeAmbient(); resolve();} };
+    s1.onended=fin; sources.forEach(s=>s.start(0));
     setTimeout(fin,(buffer.duration/v.rate)*1000+500);
   });
 }
@@ -612,8 +554,18 @@ async function boot(){
   alien = ALIENS.find(a => a.id === 'ossuun') || ALIENS[0];   // single entity: alien-one
   setAccent(alien.accent);
   history = loadMemory(alien.id);
+
+  // Wait for first user tap so audio is allowed to start (iOS Safari requires this).
+  await new Promise(resolve => {
+    $('initBtn').addEventListener('click', resolve, { once:true });
+  });
+  $('initBtn').style.display = 'none';
+  $('barWrap').style.display = 'block';
+  $('pct').style.display = 'block';
+
   ensureCtx();
   startAmbient('scan');
+  $('scanText').textContent = '∴ awakening array';
   const greetP = precacheGreeting();
   let prev = 0;
   for(const [p, txt] of scanSteps){ $('scanText').textContent = txt; await ramp(prev,p); prev=p; if(p<100) await sleep(360); }
