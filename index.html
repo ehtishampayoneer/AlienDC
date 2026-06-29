@@ -70,48 +70,48 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
 <!-- ============ BOOT / SCAN ============ -->
 <div class="screen" id="bootScreen">
   <div class="stars"></div>
-  <div class="eyebrow">Deep Field Contact Array</div>
+  <div class="eyebrow">∴ Deep Field Listening Array · Channel 7741</div>
   <div class="portal">
     <div class="ring a"></div><div class="ring b"></div><div class="ring c"></div>
     <div class="sweep"></div><div class="core"></div>
   </div>
-  <div class="status-line" id="scanText">Initializing array</div>
+  <div class="status-line" id="scanText">∴ awakening array</div>
   <div class="bar"><i id="bar"></i></div>
   <div class="pct" id="pct">0%</div>
-  <div class="foot">SECURE LINK · DEEP FIELD v2.0</div>
+  <div class="foot">∴ DO NOT TRANSMIT WITHOUT CLEARANCE ∴</div>
 </div>
 
 <!-- ============ MIC AUTH ============ -->
 <div class="screen hidden" id="micScreen">
   <div class="stars"></div>
-  <div class="steplabel">Step 1 of 2</div>
-  <h1 class="title" style="font-size:clamp(26px,8vw,40px)">OPEN<br><em>THE CHANNEL</em></h1>
-  <p class="sub">A two-way channel needs voice clearance. Grant it once and the contact runs hands-free.</p>
-  <button class="btn" id="micBtn">⫸ Authorize Voice Link</button>
-  <div class="confirm" id="micOk">✓ Channel authorized</div>
+  <div class="steplabel">⟁ first rite · voice tether</div>
+  <h1 class="title" style="font-size:clamp(26px,8vw,40px)">LEND<br><em>YOUR VOICE</em></h1>
+  <p class="sub">It has heard us. To hear us back, it needs the sound of you. Offer your voice once — the rest is silence and listening.</p>
+  <button class="btn" id="micBtn">⫸ Offer the Voice</button>
+  <div class="confirm" id="micOk">⟁ voice received · the tether holds</div>
 </div>
 
 <!-- ============ DEPLOY ============ -->
 <div class="screen hidden" id="deployScreen">
   <div class="stars"></div>
-  <div class="steplabel">Step 2 of 2 · Signal Locked</div>
+  <div class="steplabel">⟁ second rite · open the threshold</div>
   <div class="card" id="entityCard">
     <div class="desig" id="cDesig"></div>
     <div class="nm" id="cName"></div>
     <div class="org" id="cOrg"></div>
   </div>
-  <p class="sub">Point at your floor, then place it in the room. Best with earbuds.</p>
-  <button class="btn" id="deployBtn">⫸ Open Portal</button>
+  <p class="sub">Find a still place in your room. Aim where the floor meets the air. What is waiting will step through. Best heard alone, with earbuds.</p>
+  <button class="btn" id="deployBtn">⫸ Open the Threshold</button>
   <a id="arLink" rel="ar" href="#"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" style="width:1px;height:1px"/></a>
 </div>
 
 <!-- ============ DEPARTED ============ -->
 <div class="screen hidden" id="postScreen">
   <div class="stars"></div>
-  <div class="eyebrow">Transmission complete</div>
-  <h1 class="title" style="font-size:clamp(24px,7vw,38px)" id="postTitle">SIGNAL LOST</h1>
-  <p class="sub" id="postSub">The contact has withdrawn. The link is cold.</p>
-  <button class="btn ghost" id="againBtn">⫸ Scan Again</button>
+  <div class="eyebrow">∴ the link has gone cold</div>
+  <h1 class="title" style="font-size:clamp(24px,7vw,38px)" id="postTitle">IT HAS WITHDRAWN</h1>
+  <p class="sub" id="postSub">Whatever stood in your room has stepped back into the dark. The array still hums. It will hear if you call again.</p>
+  <button class="btn ghost" id="againBtn">⫸ Listen Again</button>
 </div>
 
 <!-- live status bar over the page (visible while page is in foreground / between AR sessions) -->
@@ -131,8 +131,8 @@ const ALIENS = [
   {
     id: 'ossuun',
     name: 'OSSUUN',
-    designation: 'ENTITY ⟁-0 · GRAVITIC SIGNATURE',
-    origin: 'Not from a planet. From the long cold beneath one. It hears gravity the way you hear sound.',
+    designation: '⟁ ENTITY 0 · CARRIER STEADY · OBJECT IS LOOKING BACK',
+    origin: '∴ origin: not catalogued. it remembers a star that has not yet been named. it answered first.',
     accent: '#ffb86b',
     usdz: 'alien-one.usdz',
     glb:  'alien-one.glb',
@@ -158,8 +158,8 @@ RULES:
   {
     id: 'ixx',
     name: 'IXX',
-    designation: 'ENTITY ⟁-∞ · NON-LINEAR RETURN',
-    origin: 'Not one of us — many, answering as one. Time is not a line where we are from.',
+    designation: '⟁ ENTITY ∞ · BURST UNSTABLE · ARRIVES OUT OF ORDER',
+    origin: '∴ origin: arrives from more than one direction. answers as we. claims to recognise this signal from later.',
     accent: '#9b7bff',
     usdz: 'alien-two.usdz',
     glb:  'alien-two.glb',
@@ -340,7 +340,7 @@ async function playGreeting(){
   if(!greetBufCache){ try{ const line = history.length?alien.rejoin:alien.greet; greetBufCache={line, buf:await fetchTTSBuffer(line)}; }catch(e){ return; } }
   if(!history.find(m=>m.content===greetBufCache.line)) history.push({role:'assistant', content:greetBufCache.line});
   saveMemory(alien.id, history);
-  showStatus('⬛ ' + alien.name + ' TRANSMITTING');
+  showStatus('∴ ' + alien.name + ' is speaking');
   isSpeaking = true;
   try{ if(greetBufCache.buf) await playAlienAudio(greetBufCache.buf); }catch(_){}
   isSpeaking = false; lastSpeechEnd = Date.now(); hideStatus();
@@ -353,13 +353,13 @@ async function handleUserSpeech(transcript){
   if(isSpeaking) return;
   if(Date.now() - lastSpeechEnd < RESUME_DELAY) return;
   isSpeaking = true;
-  showStatus('⬛ RECEIVING TRANSMISSION', true);
+  showStatus('∴ it is parsing your sound', true);
   startUplinkNoise();
   try{
     const reply = await getAlienResponse(transcript);
     const buf = await fetchTTSBuffer(reply);
     stopUplinkNoise(); await sleep(180);
-    showStatus('⬛ ' + alien.name + ' TRANSMITTING');
+    showStatus('∴ ' + alien.name + ' is speaking');
     await playAlienAudio(buf);
   }catch(e){ stopUplinkNoise(); }
   isSpeaking = false; lastSpeechEnd = Date.now(); hideStatus();
@@ -405,13 +405,14 @@ const screens = ['bootScreen','micScreen','deployScreen','postScreen'];
 function show(id){ screens.forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
 
 const scanSteps = [
-  [12,'Sweeping deep field'],
-  [26,'Carrier wave detected'],
-  [40,'Decoding transmission'],
-  [55,'Resolving source'],
-  [70,'Locking coordinates'],
-  [85,'Calibrating portal array'],
-  [100,'Contact acquired']
+  [10,'∴ tuning to the silence behind the stars'],
+  [22,'∴ a pressure where there should be none'],
+  [36,'∴ something out there is patient'],
+  [50,'∴ the signal is not in any language we built'],
+  [64,'∴ it knows we are listening'],
+  [78,'∴ it is moving toward this room'],
+  [92,'∴ stand still'],
+  [100,'∴ it is here']
 ];
 async function ramp(from,to){ const bar=$('bar'),pct=$('pct'); for(let i=0;i<=20;i++){ const p=from+(to-from)*(i/20); bar.style.width=p+'%'; pct.textContent=Math.round(p)+'%'; await sleep(38); } }
 
@@ -428,29 +429,77 @@ async function boot(){
   show('micScreen');
 }
 
-/* MIC AUTH */
-$('micBtn').addEventListener('click', async ()=>{
-  const btn=$('micBtn'); btn.disabled=true; btn.textContent='CONNECTING…';
-  const ctx=ensureCtx(); if(ctx.state==='suspended') await ctx.resume();
-  try{ const b=ctx.createBuffer(1,1,ctx.sampleRate); const s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(); }catch(_){}
-  await new Promise(resolve=>{
-    try{
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const t = new SR(); t.continuous=false; t.interimResults=false;
-      t.onstart = ()=> setTimeout(()=>{try{t.stop()}catch(_){}} ,500);
-      t.onend   = ()=> resolve();
-      t.onerror = e=> { if(e.error==='not-allowed'){ btn.disabled=false; btn.textContent='⫸ Retry Authorization'; } else resolve(); };
-      t.start();
-    }catch(_){ resolve(); }
-  });
-  $('micOk').classList.add('show');
-  await sleep(900);
+/* MIC AUTH — robust: surfaces the real reason if it fails */
+function proceedToDeploy(){
   $('cDesig').textContent = alien.designation;
   $('cName').textContent  = alien.name;
   $('cOrg').textContent   = alien.origin;
   $('cName').style.color  = alien.accent;
   $('entityCard').style.borderLeftColor = alien.accent;
   show('deployScreen');
+}
+
+$('micBtn').addEventListener('click', async ()=>{
+  const btn=$('micBtn'); const okLine=$('micOk');
+  btn.disabled=true; btn.textContent='∴ TETHERING…';
+
+  // 1. Unlock audio context (must be inside the user gesture)
+  try{
+    const ctx=ensureCtx(); if(ctx.state==='suspended') await ctx.resume();
+    const b=ctx.createBuffer(1,1,ctx.sampleRate); const s=ctx.createBufferSource();
+    s.buffer=b; s.connect(ctx.destination); s.start();
+  }catch(_){}
+
+  // 2. HTTPS check — mic is silently blocked on http: and file:
+  const insecure = location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1';
+  if(insecure){
+    okLine.textContent = '⟁ insecure host · the tether needs https. deploy then test.';
+    okLine.classList.add('show');
+    btn.style.display='none';
+    await sleep(1400);
+    proceedToDeploy();
+    return;
+  }
+
+  // 3. Real permission request — getUserMedia is more reliable than starting SR cold
+  let granted = false;
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      stream.getTracks().forEach(t=>t.stop()); // we only needed the prompt
+      granted = true;
+    }catch(e){
+      // surface the actual failure reason so the user knows what to fix
+      let msg = '⟁ the tether was refused';
+      if(e && e.name === 'NotAllowedError') msg = '⟁ voice refused. open Settings → Safari → microphone, then return.';
+      else if(e && e.name === 'NotFoundError') msg = '⟁ no microphone found on this device.';
+      else if(e && e.name === 'NotReadableError') msg = '⟁ another app is holding the microphone. close it and retry.';
+      okLine.textContent = msg;
+      okLine.classList.add('show');
+      btn.disabled=false; btn.textContent='⫸ Offer the Voice Again';
+      return;
+    }
+  }
+
+  // 4. Warm up the SpeechRecognition engine too (where supported)
+  try{
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(SR){
+      await new Promise(resolve=>{
+        const t = new SR(); t.continuous=false; t.interimResults=false;
+        t.onstart = ()=> setTimeout(()=>{try{t.stop()}catch(_){}} ,400);
+        t.onend   = ()=> resolve();
+        t.onerror = ()=> resolve();
+        try{ t.start(); }catch(_){ resolve(); }
+      });
+    }
+  }catch(_){}
+
+  okLine.textContent = granted ? '⟁ voice received · the tether holds' : '⟁ tether established';
+  okLine.classList.add('show');
+  btn.style.display='none';
+  await sleep(900);
+  proceedToDeploy();
 });
 
 /* DEPLOY → AR */
