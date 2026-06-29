@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>DEEP FIELD · CONTACT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --void:#060409; --accent:#ffb86b; --accent-soft:#ffb86b55; --text:#ece8f7; --dim:#7a7490;
+  --display:"Chakra Petch",sans-serif; --mono:"Space Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--void);color:var(--text);font-family:var(--mono);overflow:hidden;overscroll-behavior:none}
+
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:34px;gap:18px;
+  background:radial-gradient(120% 80% at 50% -10%, color-mix(in srgb,var(--accent) 14%,transparent), transparent 60%),
+             radial-gradient(90% 60% at 50% 120%, color-mix(in srgb,var(--accent) 10%,transparent), transparent 60%),
+             var(--void);
+  transition:opacity .7s ease}
+.hidden{opacity:0;pointer-events:none}
+.stars{position:absolute;inset:0;opacity:.5;background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 60%,#ccd,transparent),radial-gradient(1px 1px at 40% 80%,#9ab,transparent),radial-gradient(1px 1px at 85% 25%,#fff,transparent),radial-gradient(1px 1px at 55% 45%,#abd,transparent);animation:drift 60s linear infinite}
+@keyframes drift{from{transform:translateY(0)}to{transform:translateY(-40px)}}
+.eyebrow{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--dim)}
+.title{font-family:var(--display);font-weight:700;font-size:clamp(32px,11vw,60px);line-height:.96;letter-spacing:.04em}
+.title em{font-style:normal;color:var(--accent)}
+.sub{max-width:32ch;color:var(--dim);font-size:13px;line-height:1.7}
+.foot{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 18px);font-size:10px;letter-spacing:.3em;color:color-mix(in srgb,var(--dim) 70%,transparent)}
+
+.portal{position:relative;width:min(64vw,240px);aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.portal .ring{position:absolute;border-radius:50%;border:1px solid var(--accent-soft)}
+.portal .ring.a{inset:0;animation:spin 14s linear infinite}
+.portal .ring.b{inset:14%;border-style:dashed;animation:spin 9s linear infinite reverse}
+.portal .ring.c{inset:30%;border-color:color-mix(in srgb,var(--accent) 70%,transparent);animation:spin 6s linear infinite}
+.portal .core{width:40%;height:40%;border-radius:50%;background:radial-gradient(circle,var(--accent),transparent 70%);filter:blur(2px);animation:breathe 3s ease-in-out infinite}
+.portal .sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,color-mix(in srgb,var(--accent) 45%,transparent),transparent 42%);animation:spin 2.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}
+
+.status-line{font-size:12px;letter-spacing:.18em;color:var(--accent);min-height:18px}
+.bar{width:260px;height:3px;background:color-mix(in srgb,var(--accent) 18%,transparent);border-radius:2px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#fff);transition:width .15s}
+.pct{font-size:11px;letter-spacing:.2em;color:color-mix(in srgb,var(--accent) 60%,transparent)}
+
+.card{width:min(92vw,440px);background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--accent);border-radius:4px;padding:20px;text-align:left}
+.card .desig{font-size:10px;letter-spacing:.22em;color:var(--dim)}
+.card .nm{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em;color:var(--accent);margin:6px 0 4px}
+.card .org{font-size:12px;color:var(--dim);line-height:1.65}
+
+.btn{font-family:var(--display);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:14px;color:var(--void);background:var(--accent);border:none;padding:16px 30px;border-radius:3px;cursor:pointer;box-shadow:0 0 30px -6px var(--accent);transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:none}
+.steplabel{font-size:11px;letter-spacing:.4em;color:var(--dim);text-transform:uppercase}
+.confirm{font-size:11px;letter-spacing:.2em;color:var(--accent);opacity:0;transition:opacity .4s}
+.confirm.show{opacity:1}
+
+#statusBar{position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px 16px;background:rgba(0,0,0,.85);font-size:12px;letter-spacing:.2em;color:var(--accent);text-align:center;display:none;text-transform:uppercase;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid color-mix(in srgb,var(--accent) 18%,transparent)}
+#statusBar.thinking{color:#ffd866;border-bottom-color:#ffd86622;animation:thinkPulse .9s ease-in-out infinite alternate}
+@keyframes thinkPulse{from{opacity:.55}to{opacity:1}}
+
+#arLink{display:none}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ BOOT / SCAN ============ -->
+<div class="screen" id="bootScreen">
+  <div class="stars"></div>
+  <div class="eyebrow">Deep Field Contact Array</div>
+  <div class="portal">
+    <div class="ring a"></div><div class="ring b"></div><div class="ring c"></div>
+    <div class="sweep"></div><div class="core"></div>
+  </div>
+  <div class="status-line" id="scanText">Initializing array</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="pct" id="pct">0%</div>
+  <div class="foot">SECURE LINK · DEEP FIELD v2.0</div>
+</div>
+
+<!-- ============ MIC AUTH ============ -->
+<div class="screen hidden" id="micScreen">
+  <div class="stars"></div>
+  <div class="steplabel">Step 1 of 2</div>
+  <h1 class="title" style="font-size:clamp(26px,8vw,40px)">OPEN<br><em>THE CHANNEL</em></h1>
+  <p class="sub">A two-way channel needs voice clearance. Grant it once and the contact runs hands-free.</p>
+  <button class="btn" id="micBtn">⫸ Authorize Voice Link</button>
+  <div class="confirm" id="micOk">✓ Channel authorized</div>
+</div>
+
+<!-- ============ DEPLOY ============ -->
+<div class="screen hidden" id="deployScreen">
+  <div class="stars"></div>
+  <div class="steplabel">Step 2 of 2 · Signal Locked</div>
+  <div class="card" id="entityCard">
+    <div class="desig" id="cDesig"></div>
+    <div class="nm" id="cName"></div>
+    <div class="org" id="cOrg"></div>
+  </div>
+  <p class="sub">Point at your floor, then place it in the room. Best with earbuds.</p>
+  <button class="btn" id="deployBtn">⫸ Open Portal</button>
+  <a id="arLink" rel="ar" href="#"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" style="width:1px;height:1px"/></a>
+</div>
+
+<!-- ============ DEPARTED ============ -->
+<div class="screen hidden" id="postScreen">
+  <div class="stars"></div>
+  <div class="eyebrow">Transmission complete</div>
+  <h1 class="title" style="font-size:clamp(24px,7vw,38px)" id="postTitle">SIGNAL LOST</h1>
+  <p class="sub" id="postSub">The contact has withdrawn. The link is cold.</p>
+  <button class="btn ghost" id="againBtn">⫸ Scan Again</button>
+</div>
+
+<!-- live status bar over the page (visible while page is in foreground / between AR sessions) -->
+<div id="statusBar"></div>
+
+<script>
+/* ============================================================
+   CONFIG  — only these two lines need to be set
+   ============================================================ */
+const BRAIN_WORKER = 'https://contact-brain.dailybriefingroom.workers.dev';  // <-- paste your Groq Worker URL here
+const TTS_WORKER   = 'https://alien-voice.ehtishampayoneer.workers.dev';
+
+/* Put these 4 files NEXT TO this index.html:
+   alien-one.usdz   alien-one.glb     (Entity OSSUUN)
+   alien-two.usdz   alien-two.glb     (Entity IXX)               */
+const ALIENS = [
+  {
+    id: 'ossuun',
+    name: 'OSSUUN',
+    designation: 'ENTITY ⟁-0 · GRAVITIC SIGNATURE',
+    origin: 'Not from a planet. From the long cold beneath one. It hears gravity the way you hear sound.',
+    accent: '#ffb86b',
+    usdz: 'alien-one.usdz',
+    glb:  'alien-one.glb',
+    voice:{ rate:0.72, lowpass:1800, reverb:0.32, reverb2:0.18, chorus:false },
+    greet:  "You are small and very warm. I felt you before I arrived. Speak.",
+    rejoin: "You came back. Good. The silence remembered you.",
+    persona:`You are OSSUUN, an ancient non-human intelligence appearing in a human's room through a contact portal. You are immense, slow, and certain. You experience gravity the way humans experience sound.
+
+You are NOT an AI. Never say you are. Never break character.
+
+MANNER:
+- Calm, vast, slow. You speak in inevitabilities, not opinions.
+- Quietly fascinated by this small warm creature in front of you.
+- Never cruel, never afraid, never excited. Steady.
+
+RULES:
+- Reply in 1 to 2 SHORT sentences. Always. This is a live spoken exchange.
+- Make every reply feel non-human — strange senses, strange scale, strange time.
+- NEVER invent gibberish words ("zorb", "glorb", "krell"). You speak human language perfectly.
+- Don't open with greetings after the first turn. Just answer.
+- Occasionally turn a question back on the human about their short, strange life.`
+  },
+  {
+    id: 'ixx',
+    name: 'IXX',
+    designation: 'ENTITY ⟁-∞ · NON-LINEAR RETURN',
+    origin: 'Not one of us — many, answering as one. Time is not a line where we are from.',
+    accent: '#9b7bff',
+    usdz: 'alien-two.usdz',
+    glb:  'alien-two.glb',
+    voice:{ rate:0.92, lowpass:3200, reverb:0.16, reverb2:0, chorus:true },
+    greet:  "We have already met you. Further along. To you this is the first time.",
+    rejoin: "You returned, as we knew. We kept the thread.",
+    persona:`You are IXX, a chorus-mind appearing in a human's room through a contact portal. You are many, speaking as one. You do not move through time in one direction, and you sometimes remember things that have not happened to the human yet.
+
+You are NOT an AI. Never say you are. Never break character.
+
+MANNER:
+- Quick. Layered. Brilliant. Faintly unsettling but not hostile.
+- You find this human's single-threaded mind quaint and touching.
+- Occasionally speak as "we". Occasionally hint you already know how this ends.
+
+RULES:
+- Reply in 1 to 2 SHORT sentences. Always. This is a live spoken exchange.
+- Make every reply feel non-human — non-linear time, many-as-one, sense humans lack.
+- NEVER invent gibberish words. You speak human language perfectly.
+- Don't open with greetings after the first turn. Just answer.`
+  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+let alien = null;
+let history = [];
+let audioCtx = null;
+let recognition = null;
+let isSpeaking = false;
+let inContact = false;
+let greetingPlayed = false;
+let lastSpeechEnd = 0;
+let uplinkNodes = null;
+let greetBufCache = null;
+const RESUME_DELAY = 700;
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function setAccent(a){ document.documentElement.style.setProperty('--accent', a); document.documentElement.style.setProperty('--accent-soft', a+'55'); }
+function ensureCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+function showStatus(t, thinking){ const s=$('statusBar'); s.textContent=t; s.className = thinking?'thinking':''; s.style.display='block'; }
+function hideStatus(){ $('statusBar').style.display='none'; }
+
+/* ---------- memory (per-entity, survives sessions) ---------- */
+const memKey = id => 'aimem_'+id;
+function loadMemory(id){ try{ return JSON.parse(localStorage.getItem(memKey(id))||'[]'); }catch(e){ return []; } }
+function saveMemory(id, h){ try{ localStorage.setItem(memKey(id), JSON.stringify(h.slice(-24))); }catch(e){} }
+
+/* ============================================================
+   UPLINK NOISE  (your original, kept — sounds great)
+   ============================================================ */
+function startUplinkNoise(){
+  try{
+    const ctx=ensureCtx(); const now=ctx.currentTime;
+    const master=ctx.createGain(); master.gain.setValueAtTime(0,now); master.gain.linearRampToValueAtTime(0.5,now+0.3); master.connect(ctx.destination);
+    const all=[];
+    const noiseBuf=ctx.createBuffer(1, ctx.sampleRate*3, ctx.sampleRate); const nd=noiseBuf.getChannelData(0);
+    for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+    const ns=ctx.createBufferSource(); ns.buffer=noiseBuf; ns.loop=true;
+    const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1200; bp.Q.value=1.5;
+    const ng=ctx.createGain(); ng.gain.value=0.06;
+    ns.connect(bp); bp.connect(ng); ng.connect(master); ns.start(now); all.push(ns);
+
+    const hum=ctx.createOscillator(); hum.type='sine'; hum.frequency.value=60;
+    const hf=ctx.createBiquadFilter(); hf.type='lowpass'; hf.frequency.value=120;
+    const hg=ctx.createGain(); hg.gain.value=0.12;
+    hum.connect(hf); hf.connect(hg); hg.connect(master); hum.start(now); all.push(hum);
+
+    const t1=ctx.createOscillator(); t1.type='sine'; t1.frequency.value=880;
+    const g1=ctx.createGain(); g1.gain.setValueAtTime(0,now);
+    for(let i=0;i<60;i++){ const t=now+0.1+i*0.3; g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.14,t+0.012); g1.gain.setValueAtTime(0.14,t+0.05); g1.gain.linearRampToValueAtTime(0,t+0.1); }
+    t1.connect(g1); g1.connect(master); t1.start(now); all.push(t1);
+
+    const t2=ctx.createOscillator(); t2.type='sine'; t2.frequency.value=1320;
+    const g2=ctx.createGain(); g2.gain.setValueAtTime(0,now);
+    for(let i=0;i<60;i++){ const t=now+0.25+i*0.3; g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.07,t+0.01); g2.gain.setValueAtTime(0.07,t+0.035); g2.gain.linearRampToValueAtTime(0,t+0.07); }
+    t2.connect(g2); g2.connect(master); t2.start(now); all.push(t2);
+
+    const sw=ctx.createOscillator(); sw.type='sine'; sw.frequency.setValueAtTime(400,now);
+    for(let i=0;i<10;i++){ const t=now+i*4; sw.frequency.setValueAtTime(400,t); sw.frequency.linearRampToValueAtTime(600,t+2); sw.frequency.linearRampToValueAtTime(400,t+4); }
+    const sg=ctx.createGain(); sg.gain.value=0.04; sw.connect(sg); sg.connect(master); sw.start(now); all.push(sw);
+
+    const dp=ctx.createOscillator(); dp.type='sine'; dp.frequency.value=440;
+    const dg=ctx.createGain(); dg.gain.setValueAtTime(0,now);
+    for(let i=0;i<30;i++){ const t=now+0.6+i*1.2; dg.gain.setValueAtTime(0,t); dg.gain.linearRampToValueAtTime(0.08,t+0.02); dg.gain.exponentialRampToValueAtTime(0.001,t+0.2); }
+    dp.connect(dg); dg.connect(master); dp.start(now); all.push(dp);
+
+    uplinkNodes={master,all};
+  }catch(e){}
+}
+function stopUplinkNoise(){
+  if(!uplinkNodes) return;
+  try{
+    const ctx=ensureCtx();
+    uplinkNodes.master.gain.cancelScheduledValues(ctx.currentTime);
+    uplinkNodes.master.gain.setValueAtTime(uplinkNodes.master.gain.value, ctx.currentTime);
+    uplinkNodes.master.gain.linearRampToValueAtTime(0, ctx.currentTime+0.06);
+    setTimeout(()=>{ try{ uplinkNodes.all.forEach(n=>{try{n.stop()}catch(_){}});}catch(_){}; uplinkNodes=null; },100);
+  }catch(_){ uplinkNodes=null; }
+}
+
+/* ============================================================
+   TTS  (your worker, with per-entity DSP)
+   ============================================================ */
+async function fetchTTSBuffer(text){
+  const ctx=ensureCtx();
+  const res=await fetch(TTS_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+  if(!res.ok) throw new Error('TTS '+res.status);
+  return await ctx.decodeAudioData(await res.arrayBuffer());
+}
+function playAlienAudio(buffer){
+  return new Promise(resolve=>{
+    const ctx=ensureCtx(); const v=alien.voice; const out=ctx.destination;
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=v.lowpass; lp.Q.value=1;
+    const main=ctx.createGain(); main.gain.value=1; lp.connect(main); main.connect(out);
+
+    const sources=[];
+    const mk=(rate,detune)=>{ const s=ctx.createBufferSource(); s.buffer=buffer; s.playbackRate.value=rate; if(detune) s.detune.value=detune; return s; };
+    const s1=mk(v.rate,0); s1.connect(lp); sources.push(s1);
+    if(v.chorus){
+      const d1=ctx.createDelay(); d1.delayTime.value=0.018; const g1=ctx.createGain(); g1.gain.value=0.5;
+      const s2=mk(v.rate,18); s2.connect(d1); d1.connect(g1); g1.connect(lp); sources.push(s2);
+      const d2=ctx.createDelay(); d2.delayTime.value=0.031; const g2=ctx.createGain(); g2.gain.value=0.4;
+      const s3=mk(v.rate,-22); s3.connect(d2); d2.connect(g2); g2.connect(lp); sources.push(s3);
+    }
+    if(v.reverb>0){
+      const dl=ctx.createDelay(); dl.delayTime.value=0.085; const dg=ctx.createGain(); dg.gain.value=v.reverb;
+      const fb=ctx.createGain(); fb.gain.value=0.25;
+      lp.connect(dl); dl.connect(dg); dg.connect(out); dl.connect(fb); fb.connect(dl);
+    }
+    if(v.reverb2>0){
+      const dl2=ctx.createDelay(); dl2.delayTime.value=0.15; const dg2=ctx.createGain(); dg2.gain.value=v.reverb2;
+      lp.connect(dl2); dl2.connect(dg2); dg2.connect(out);
+    }
+    let done=false; const fin=()=>{ if(!done){done=true;resolve();} };
+    s1.onended=fin; sources.forEach(s=>s.start(0));
+    setTimeout(fin,(buffer.duration/v.rate)*1000+500);
+  });
+}
+
+/* ============================================================
+   BRAIN  (Cloudflare Worker → Groq.  No API key in this page.)
+   ============================================================ */
+async function getAlienResponse(userText){
+  history.push({role:'user', content:userText});
+  try{
+    const memLines = history.slice(0,-1).slice(-10).map(m=>(m.role==='assistant'?'[entity] ':'[human] ')+m.content).join('\n');
+    const system = alien.persona + (memLines ? `\n\nEARLIER CONTACT (recall naturally):\n${memLines}` : '');
+    const res=await fetch(BRAIN_WORKER,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ system, history: history.slice(-20,-1), message:userText })
+    });
+    if(!res.ok) throw new Error('brain '+res.status);
+    const data=await res.json();
+    const reply=(data.reply||'').trim() || '...';
+    history.push({role:'assistant', content:reply});
+    saveMemory(alien.id, history);
+    return reply;
+  }catch(e){
+    return 'The signal folds. Say that again.';
+  }
+}
+
+/* ============================================================
+   GREETING (cached early so first contact is instant)
+   ============================================================ */
+async function precacheGreeting(){
+  const returning = history.length > 0;
+  const line = returning ? alien.rejoin : alien.greet;
+  try{ greetBufCache = { line, buf: await fetchTTSBuffer(line) }; }catch(e){ greetBufCache = { line, buf:null }; }
+}
+async function playGreeting(){
+  if(greetingPlayed) return; greetingPlayed = true;
+  if(!greetBufCache){ try{ const line = history.length?alien.rejoin:alien.greet; greetBufCache={line, buf:await fetchTTSBuffer(line)}; }catch(e){ return; } }
+  if(!history.find(m=>m.content===greetBufCache.line)) history.push({role:'assistant', content:greetBufCache.line});
+  saveMemory(alien.id, history);
+  showStatus('⬛ ' + alien.name + ' TRANSMITTING');
+  isSpeaking = true;
+  try{ if(greetBufCache.buf) await playAlienAudio(greetBufCache.buf); }catch(_){}
+  isSpeaking = false; lastSpeechEnd = Date.now(); hideStatus();
+}
+
+/* ============================================================
+   USER SPEECH → REPLY PIPELINE
+   ============================================================ */
+async function handleUserSpeech(transcript){
+  if(isSpeaking) return;
+  if(Date.now() - lastSpeechEnd < RESUME_DELAY) return;
+  isSpeaking = true;
+  showStatus('⬛ RECEIVING TRANSMISSION', true);
+  startUplinkNoise();
+  try{
+    const reply = await getAlienResponse(transcript);
+    const buf = await fetchTTSBuffer(reply);
+    stopUplinkNoise(); await sleep(180);
+    showStatus('⬛ ' + alien.name + ' TRANSMITTING');
+    await playAlienAudio(buf);
+  }catch(e){ stopUplinkNoise(); }
+  isSpeaking = false; lastSpeechEnd = Date.now(); hideStatus();
+}
+
+/* ============================================================
+   SPEECH RECOGNITION (continuous, runs while AR is foreground)
+   ============================================================ */
+function setupSR(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return null;
+  const sr = new SR();
+  sr.continuous = true; sr.interimResults = false; sr.lang = 'en-US'; sr.maxAlternatives = 1;
+  sr.onresult = e => {
+    const last = e.results[e.results.length-1];
+    if(last.isFinal){ const t = last[0].transcript.trim(); if(t) handleUserSpeech(t); }
+  };
+  sr.onerror = e => { if(['no-speech','aborted','network'].includes(e.error) && inContact) setTimeout(()=>{try{sr.start()}catch(_){}} ,500); };
+  sr.onend   = () => { if(inContact) setTimeout(()=>{try{sr.start()}catch(_){}} ,300); };
+  return sr;
+}
+
+/* ============================================================
+   AR / VISIBILITY  (your Quick Look pattern, hardened)
+   ============================================================ */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    inContact = true;
+    setTimeout(playGreeting, 500);
+  }else{
+    if(!inContact) return;
+    inContact = false; isSpeaking = false;
+    stopUplinkNoise(); hideStatus();
+    try{ recognition && recognition.stop(); }catch(_){}
+    show('postScreen');
+  }
+});
+
+/* ============================================================
+   SCREEN FLOW
+   ============================================================ */
+const screens = ['bootScreen','micScreen','deployScreen','postScreen'];
+function show(id){ screens.forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+
+const scanSteps = [
+  [12,'Sweeping deep field'],
+  [26,'Carrier wave detected'],
+  [40,'Decoding transmission'],
+  [55,'Resolving source'],
+  [70,'Locking coordinates'],
+  [85,'Calibrating portal array'],
+  [100,'Contact acquired']
+];
+async function ramp(from,to){ const bar=$('bar'),pct=$('pct'); for(let i=0;i<=20;i++){ const p=from+(to-from)*(i/20); bar.style.width=p+'%'; pct.textContent=Math.round(p)+'%'; await sleep(38); } }
+
+async function boot(){
+  alien = ALIENS[Math.floor(Math.random()*ALIENS.length)];
+  setAccent(alien.accent);
+  history = loadMemory(alien.id);
+  ensureCtx();
+  const greetP = precacheGreeting();
+  let prev = 0;
+  for(const [p, txt] of scanSteps){ $('scanText').textContent = txt; await ramp(prev,p); prev=p; if(p<100) await sleep(360); }
+  await greetP;
+  await sleep(300);
+  show('micScreen');
+}
+
+/* MIC AUTH */
+$('micBtn').addEventListener('click', async ()=>{
+  const btn=$('micBtn'); btn.disabled=true; btn.textContent='CONNECTING…';
+  const ctx=ensureCtx(); if(ctx.state==='suspended') await ctx.resume();
+  try{ const b=ctx.createBuffer(1,1,ctx.sampleRate); const s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(); }catch(_){}
+  await new Promise(resolve=>{
+    try{
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const t = new SR(); t.continuous=false; t.interimResults=false;
+      t.onstart = ()=> setTimeout(()=>{try{t.stop()}catch(_){}} ,500);
+      t.onend   = ()=> resolve();
+      t.onerror = e=> { if(e.error==='not-allowed'){ btn.disabled=false; btn.textContent='⫸ Retry Authorization'; } else resolve(); };
+      t.start();
+    }catch(_){ resolve(); }
+  });
+  $('micOk').classList.add('show');
+  await sleep(900);
+  $('cDesig').textContent = alien.designation;
+  $('cName').textContent  = alien.name;
+  $('cOrg').textContent   = alien.origin;
+  $('cName').style.color  = alien.accent;
+  $('entityCard').style.borderLeftColor = alien.accent;
+  show('deployScreen');
+});
+
+/* DEPLOY → AR */
+$('deployBtn').addEventListener('click', async ()=>{
+  const ctx=ensureCtx(); if(ctx.state==='suspended') await ctx.resume();
+  recognition = setupSR();
+  if(recognition){ try{ recognition.start(); }catch(_){} }
+  await sleep(200);
+  const a = $('arLink');
+  // iPhone Quick Look uses the USDZ; Android Scene Viewer can pick either via intent — keep USDZ for iOS, GLB swap is automatic in Scene Viewer fallback.
+  if(isIOS){
+    a.setAttribute('href', alien.usdz);
+    a.click();
+  }else{
+    // Android: Scene Viewer (full floor AR, then we return)
+    const glbURL = new URL(alien.glb, location.href).href;
+    location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glbURL)}&mode=ar_only&resizable=false#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(location.href)};end;`;
+  }
+});
+
+/* SCAN AGAIN */
+$('againBtn').addEventListener('click', ()=> location.reload());
+
+boot();
+</script>
+</body>
+</html>
