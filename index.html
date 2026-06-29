@@ -77,10 +77,9 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
     <div class="ring a"></div><div class="ring b"></div><div class="ring c"></div>
     <div class="sweep"></div><div class="core"></div>
   </div>
-  <div class="status-line" id="scanText">∴ tap the array to wake it</div>
+  <div class="status-line" id="scanText">∴ touch the array to wake it</div>
   <div class="bar" id="barWrap" style="display:none"><i id="bar"></i></div>
   <div class="pct" id="pct" style="display:none">0%</div>
-  <button class="btn ghost" id="initBtn">⫸ Initiate</button>
   <div class="foot">∴ DO NOT TRANSMIT WITHOUT CLEARANCE ∴</div>
 </div>
 
@@ -103,7 +102,7 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
     <div class="nm" id="cName"></div>
     <div class="org" id="cOrg"></div>
   </div>
-  <p class="sub">Find a still place in your room. Aim where the floor meets the air. What is waiting will step through. If it arrives larger than you expect, pinch the screen to ease it down to your size. Best heard alone, with earbuds.</p>
+  <p class="sub">Find a still place in your room. Aim where the floor meets the air. What is waiting will step through. Best heard alone, with earbuds.</p>
   <button class="btn" id="deployBtn">⫸ Open the Threshold</button>
   <a id="arLink" rel="ar" href="#"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" style="width:1px;height:1px"/></a>
 </div>
@@ -139,7 +138,7 @@ const ALIENS = [
     accent: '#ffb86b',
     usdz: 'alien-one.usdz',
     glb:  'alien-one.glb',
-    voice:{ rate:0.72, lowpass:1800, reverb:0.32, reverb2:0.18, chorus:false },
+    voice:{ rate:0.85, lowpass:1800, reverb:0.32, reverb2:0.18, chorus:false, gain:1.6 },
     greet:  "You are small and very warm. I felt you before I arrived. Speak.",
     rejoin: "You came back. Good. The silence remembered you.",
     persona:`You are OSSUUN, an ancient non-human intelligence appearing in a human's room through a contact portal. You are immense, slow, and certain. You experience gravity the way humans experience sound.
@@ -166,7 +165,7 @@ RULES:
     accent: '#9b7bff',
     usdz: 'alien-two.usdz',
     glb:  'alien-two.glb',
-    voice:{ rate:0.92, lowpass:3200, reverb:0.16, reverb2:0, chorus:true },
+    voice:{ rate:1.05, lowpass:3200, reverb:0.16, reverb2:0, chorus:true, gain:1.6 },
     greet:  "We have already met you. Further along. To you this is the first time.",
     rejoin: "You returned, as we knew. We kept the thread.",
     persona:`You are IXX, a chorus-mind appearing in a human's room through a contact portal. You are many, speaking as one. You do not move through time in one direction, and you sometimes remember things that have not happened to the human yet.
@@ -410,7 +409,7 @@ function playAlienAudio(buffer){
     const ctx=ensureCtx(); const v=alien.voice; const out=ctx.destination;
     pauseAmbient();
     const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=v.lowpass; lp.Q.value=1;
-    const main=ctx.createGain(); main.gain.value=1; lp.connect(main); main.connect(out);
+    const main=ctx.createGain(); main.gain.value=v.gain||1; lp.connect(main); main.connect(out);
 
     const sources=[];
     const mk=(rate,detune)=>{ const s=ctx.createBufferSource(); s.buffer=buffer; s.playbackRate.value=rate; if(detune) s.detune.value=detune; return s; };
@@ -555,11 +554,12 @@ async function boot(){
   setAccent(alien.accent);
   history = loadMemory(alien.id);
 
-  // Wait for first user tap so audio is allowed to start (iOS Safari requires this).
+  // Wait for any tap on the boot screen so audio is allowed to start
+  // (iOS Safari requires one user gesture before audio can play).
   await new Promise(resolve => {
-    $('initBtn').addEventListener('click', resolve, { once:true });
+    const handler = () => { $('bootScreen').removeEventListener('click', handler); resolve(); };
+    $('bootScreen').addEventListener('click', handler);
   });
-  $('initBtn').style.display = 'none';
   $('barWrap').style.display = 'block';
   $('pct').style.display = 'block';
 
@@ -658,7 +658,7 @@ $('deployBtn').addEventListener('click', async ()=>{
   if(isIOS){
     // ar-scale=fixed locks the model to its authored real-world size.
     // The model must be exported with metersPerUnit=1 for this to be 6ft / 1.83m.
-    a.setAttribute('href', alien.usdz);
+    a.setAttribute('href', alien.usdz + '#custom=ar-scale=0.75');
     a.click();
   }else{
     // Android: Scene Viewer (full floor AR, then we return)
