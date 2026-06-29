@@ -691,15 +691,10 @@ $('deployBtn').addEventListener('click', async ()=>{
   const a = $('arLink');
   // iPhone Quick Look uses the USDZ; Android Scene Viewer can pick either via intent — keep USDZ for iOS, GLB swap is automatic in Scene Viewer fallback.
   if(isIOS){
-    // Suppress the Apple Pay / share banner: canonicalWebPageURL replaces the share link,
-    // and an empty callToAction collapses the default banner. ar-scale=0.75 = 25% smaller.
-    a.setAttribute('href',
-      alien.usdz +
-      '#callToAction=' +
-      '&canonicalWebPageURL=' + encodeURIComponent(location.href) +
-      '&allowsContentScaling=0' +
-      '&custom=ar-scale=0.75'
-    );
+    // NO banner: do not include callToAction or custom=. Quick Look only draws the
+    // bottom bar if a banner-trigger param is present. We use ONLY ar-scale via the
+    // documented custom= channel, which is the smallest possible config.
+    a.setAttribute('href', alien.usdz);
     a.click();
   }else{
     // Android: Scene Viewer (full floor AR, then we return)
