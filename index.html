@@ -21,8 +21,30 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
   transition:opacity .7s ease}
 .hidden{opacity:0;pointer-events:none;visibility:hidden}
 .stars{position:absolute;inset:0;opacity:.5;pointer-events:none;z-index:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 60%,#ccd,transparent),radial-gradient(1px 1px at 40% 80%,#9ab,transparent),radial-gradient(1px 1px at 85% 25%,#fff,transparent),radial-gradient(1px 1px at 55% 45%,#abd,transparent);animation:drift 60s linear infinite}
-.screen > :not(.stars){position:relative;z-index:1}
+.screen > :not(.stars):not(.galaxy){position:relative;z-index:1}
 .btn{position:relative;z-index:2}
+
+/* ---- soft drifting galaxy particles ---- */
+.galaxy{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.galaxy span{
+  position:absolute;
+  display:block;
+  width:2px;height:2px;border-radius:50%;
+  background:#fff;
+  opacity:0;
+  filter:blur(.4px);
+  animation:gx linear infinite;
+  will-change:transform,opacity;
+}
+.galaxy span.big{width:3px;height:3px;background:color-mix(in srgb, var(--accent) 80%, #fff);filter:blur(.6px) drop-shadow(0 0 4px var(--accent))}
+.galaxy span.tiny{width:1px;height:1px;background:#cdd}
+@keyframes gx{
+  0%{transform:translate3d(0,0,0) scale(.6);opacity:0}
+  10%{opacity:.7}
+  50%{opacity:1}
+  90%{opacity:.5}
+  100%{transform:translate3d(var(--dx,40px),var(--dy,-120px),0) scale(1);opacity:0}
+}
 @keyframes drift{from{transform:translateY(0)}to{transform:translateY(-40px)}}
 .eyebrow{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--dim)}
 .title{font-family:var(--display);font-weight:700;font-size:clamp(32px,11vw,60px);line-height:.96;letter-spacing:.04em}
@@ -72,6 +94,7 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
 <!-- ============ BOOT / SCAN ============ -->
 <div class="screen" id="bootScreen">
   <div class="stars"></div>
+  <div class="galaxy"></div>
   <div class="eyebrow">∴ Deep Field Listening Array · Channel 7741</div>
   <div class="portal" id="bootPortal">
     <div class="ring a"></div><div class="ring b"></div><div class="ring c"></div>
@@ -86,6 +109,7 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
 <!-- ============ MIC AUTH ============ -->
 <div class="screen hidden" id="micScreen">
   <div class="stars"></div>
+  <div class="galaxy"></div>
   <div class="steplabel">⟁ first rite · voice tether</div>
   <h1 class="title" style="font-size:clamp(26px,8vw,40px)">LEND<br><em>YOUR VOICE</em></h1>
   <p class="sub">It has heard us. To hear us back, it needs the sound of you. Offer your voice once — the rest is silence and listening.</p>
@@ -96,6 +120,7 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
 <!-- ============ DEPLOY ============ -->
 <div class="screen hidden" id="deployScreen">
   <div class="stars"></div>
+  <div class="galaxy"></div>
   <div class="steplabel">⟁ second rite · open the threshold</div>
   <div class="card" id="entityCard">
     <div class="desig" id="cDesig"></div>
@@ -110,6 +135,7 @@ html,body{height:100%;background:var(--void);color:var(--text);font-family:var(-
 <!-- ============ DEPARTED ============ -->
 <div class="screen hidden" id="postScreen">
   <div class="stars"></div>
+  <div class="galaxy"></div>
   <div class="eyebrow">∴ the link has gone cold</div>
   <h1 class="title" style="font-size:clamp(24px,7vw,38px)" id="postTitle">IT HAS WITHDRAWN</h1>
   <p class="sub" id="postSub">Whatever stood in your room has stepped back into the dark. The array still hums. It will hear if you call again.</p>
@@ -665,9 +691,15 @@ $('deployBtn').addEventListener('click', async ()=>{
   const a = $('arLink');
   // iPhone Quick Look uses the USDZ; Android Scene Viewer can pick either via intent — keep USDZ for iOS, GLB swap is automatic in Scene Viewer fallback.
   if(isIOS){
-    // ar-scale=0.75 makes the model 25% smaller.
-    // canonicalWebPageURL is required to suppress the Apple Pay/share banner.
-    a.setAttribute('href', alien.usdz + '#custom=ar-scale=0.75&canonicalWebPageURL=' + encodeURIComponent(location.href) + '&callToAction=' + encodeURIComponent(''));
+    // Suppress the Apple Pay / share banner: canonicalWebPageURL replaces the share link,
+    // and an empty callToAction collapses the default banner. ar-scale=0.75 = 25% smaller.
+    a.setAttribute('href',
+      alien.usdz +
+      '#callToAction=' +
+      '&canonicalWebPageURL=' + encodeURIComponent(location.href) +
+      '&allowsContentScaling=0' +
+      '&custom=ar-scale=0.75'
+    );
     a.click();
   }else{
     // Android: Scene Viewer (full floor AR, then we return)
@@ -678,6 +710,37 @@ $('deployBtn').addEventListener('click', async ()=>{
 
 /* SCAN AGAIN */
 $('againBtn').addEventListener('click', ()=> location.reload());
+
+/* ---- galaxy particle generator (subtle drifting motes) ---- */
+function spawnGalaxy(){
+  document.querySelectorAll('.galaxy').forEach(g=>{
+    if(g.dataset.spawned) return;
+    g.dataset.spawned = '1';
+    const COUNT = 28;
+    for(let i=0;i<COUNT;i++){
+      const dot = document.createElement('span');
+      // varied size
+      const r = Math.random();
+      if(r < 0.18) dot.className = 'big';
+      else if(r > 0.7) dot.className = 'tiny';
+      // start anywhere on screen
+      dot.style.left = (Math.random()*100) + '%';
+      dot.style.top  = (Math.random()*100) + '%';
+      // drift direction & distance (slow, mostly upward)
+      const dx = (Math.random()*60 - 30).toFixed(0) + 'px';
+      const dy = (-60 - Math.random()*120).toFixed(0) + 'px';
+      dot.style.setProperty('--dx', dx);
+      dot.style.setProperty('--dy', dy);
+      // very long durations so it feels like nebula, not snow
+      const dur = 18 + Math.random()*24;
+      const delay = -Math.random()*dur; // stagger
+      dot.style.animationDuration = dur.toFixed(1) + 's';
+      dot.style.animationDelay = delay.toFixed(1) + 's';
+      g.appendChild(dot);
+    }
+  });
+}
+spawnGalaxy();
 
 boot();
 </script>
