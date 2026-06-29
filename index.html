@@ -441,21 +441,30 @@ function playAlienAudio(buffer){
 async function getAlienResponse(userText){
   history.push({role:'user', content:userText});
   try{
-    const memLines = history.slice(0,-1).slice(-10).map(m=>(m.role==='assistant'?'[entity] ':'[human] ')+m.content).join('\n');
+    const memLines = history.slice(0,-1).slice(-6).map(m=>(m.role==='assistant'?'[entity] ':'[human] ')+m.content).join('\n');
     const system = alien.persona + (memLines ? `\n\nEARLIER CONTACT (recall naturally):\n${memLines}` : '');
     const res=await fetch(BRAIN_WORKER,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ system, history: history.slice(-20,-1), message:userText })
+      body:JSON.stringify({ system, history: history.slice(-10,-1), message:userText })
     });
-    if(!res.ok) throw new Error('brain '+res.status);
+    if(!res.ok){
+      const txt = await res.text();
+      console.error('[brain] HTTP', res.status, txt);
+      throw new Error('brain ' + res.status + ' ' + txt.slice(0,120));
+    }
     const data=await res.json();
+    if(data.error){
+      console.error('[brain] worker error:', data.error, data.detail||'');
+      throw new Error('worker: ' + data.error + (data.detail?' · '+data.detail:''));
+    }
     const reply=(data.reply||'').trim() || '...';
     history.push({role:'assistant', content:reply});
     saveMemory(alien.id, history);
     return reply;
   }catch(e){
-    return 'The signal folds. Say that again.';
+    console.error('[brain] caught:', e);
+    return 'The signal folds. ' + (e.message || 'Say that again.');
   }
 }
 
@@ -656,9 +665,9 @@ $('deployBtn').addEventListener('click', async ()=>{
   const a = $('arLink');
   // iPhone Quick Look uses the USDZ; Android Scene Viewer can pick either via intent — keep USDZ for iOS, GLB swap is automatic in Scene Viewer fallback.
   if(isIOS){
-    // ar-scale=fixed locks the model to its authored real-world size.
-    // The model must be exported with metersPerUnit=1 for this to be 6ft / 1.83m.
-    a.setAttribute('href', alien.usdz + '#custom=ar-scale=0.75');
+    // ar-scale=0.75 makes the model 25% smaller.
+    // canonicalWebPageURL is required to suppress the Apple Pay/share banner.
+    a.setAttribute('href', alien.usdz + '#custom=ar-scale=0.75&canonicalWebPageURL=' + encodeURIComponent(location.href) + '&callToAction=' + encodeURIComponent(''));
     a.click();
   }else{
     // Android: Scene Viewer (full floor AR, then we return)
