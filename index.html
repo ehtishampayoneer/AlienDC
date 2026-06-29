@@ -281,7 +281,7 @@ function startAmbient(mode){
     const ctx = ensureCtx(); const now = ctx.currentTime;
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, now);
-    master.gain.linearRampToValueAtTime(mode==='scan' ? 0.16 : 0.11, now + 1.2);
+    master.gain.linearRampToValueAtTime(mode==='scan' ? 0.28 : 0.11, now + 1.2);
     master.connect(ctx.destination);
     const all = [];
 
@@ -311,22 +311,38 @@ function startAmbient(mode){
     nSrc.connect(nBP); nBP.connect(nG); nG.connect(master); nSrc.start(now);
     all.push(nSrc);
 
-    // --- rare, distant pings ---
-    const pingInterval = mode==='scan' ? 2.4 : 4.2;
-    const pingFreq     = mode==='scan' ? 660 : 520;
-    const pingCount    = 40;
+    // --- audible scan pings (louder during scan, sparse during listen) ---
+    const pingInterval = mode==='scan' ? 1.6 : 4.2;
+    const pingFreq     = mode==='scan' ? 880 : 520;
+    const pingGainPeak = mode==='scan' ? 0.32 : 0.08;   // <-- scan pings now clearly audible
+    const pingCount    = 60;
+
+    // tonal ping
     const ping = ctx.createOscillator(); ping.type='sine'; ping.frequency.value=pingFreq;
-    const pG = ctx.createGain(); pG.gain.setValueAtTime(0, now);
+    const pG   = ctx.createGain(); pG.gain.setValueAtTime(0, now);
+
+    // second harmonic for a brighter "beep"
+    const ping2 = ctx.createOscillator(); ping2.type='sine'; ping2.frequency.value=pingFreq*2;
+    const pG2   = ctx.createGain(); pG2.gain.setValueAtTime(0, now);
+
     for(let i=0;i<pingCount;i++){
-      const t = now + 1.5 + i*pingInterval + (Math.random()*0.3);
+      const t = now + 1.2 + i*pingInterval + (Math.random()*0.15);
       pG.gain.setValueAtTime(0, t);
-      pG.gain.linearRampToValueAtTime(0.10, t+0.02);
+      pG.gain.linearRampToValueAtTime(pingGainPeak, t+0.012);
       pG.gain.exponentialRampToValueAtTime(0.001, t+0.55);
+      pG2.gain.setValueAtTime(0, t);
+      pG2.gain.linearRampToValueAtTime(pingGainPeak*0.35, t+0.012);
+      pG2.gain.exponentialRampToValueAtTime(0.001, t+0.35);
     }
+
+    // ping reverb tail
     const pRev = ctx.createDelay(); pRev.delayTime.value=0.22;
-    const pRevG = ctx.createGain(); pRevG.gain.value=0.4;
-    ping.connect(pG); pG.connect(master); pG.connect(pRev); pRev.connect(pRevG); pRevG.connect(master);
-    ping.start(now); all.push(ping);
+    const pRevG = ctx.createGain(); pRevG.gain.value=0.45;
+    ping.connect(pG);   pG.connect(master);   pG.connect(pRev);
+    ping2.connect(pG2); pG2.connect(master);
+    pRev.connect(pRevG); pRevG.connect(master);
+    ping.start(now); ping2.start(now);
+    all.push(ping, ping2);
 
     // --- sonar sweep (scan mode only) ---
     if(mode==='scan'){
@@ -593,7 +609,7 @@ const scanSteps = [
 async function ramp(from,to){ const bar=$('bar'),pct=$('pct'); for(let i=0;i<=20;i++){ const p=from+(to-from)*(i/20); bar.style.width=p+'%'; pct.textContent=Math.round(p)+'%'; await sleep(38); } }
 
 async function boot(){
-  alien = ALIENS[Math.floor(Math.random()*ALIENS.length)];
+  alien = ALIENS.find(a => a.id === 'ossuun') || ALIENS[0];   // single entity: alien-one
   setAccent(alien.accent);
   history = loadMemory(alien.id);
   ensureCtx();
@@ -690,7 +706,7 @@ $('deployBtn').addEventListener('click', async ()=>{
   if(isIOS){
     // ar-scale=fixed locks the model to its authored real-world size.
     // The model must be exported with metersPerUnit=1 for this to be 6ft / 1.83m.
-    a.setAttribute('href', alien.usdz + '#allowsContentScaling=0&custom=ar-scale=fixed');
+    a.setAttribute('href', alien.usdz);
     a.click();
   }else{
     // Android: Scene Viewer (full floor AR, then we return)
