@@ -697,9 +697,40 @@ $('deployBtn').addEventListener('click', async ()=>{
     a.setAttribute('href', alien.usdz);
     a.click();
   }else{
-    // Android: Scene Viewer (full floor AR, then we return)
-    const glbURL = new URL(alien.glb, location.href).href;
-    location.href = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glbURL)}&mode=ar_only&resizable=false#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(location.href)};end;`;
+    // Android: load the GLB into a hidden <model-viewer>, force its real-world size
+    // to 1.78m (5'10") via scale, then activate AR. Scene Viewer honors model-viewer's
+    // active scale, so the alien arrives at human height in the room.
+    if(!document.querySelector('script[data-mv]')){
+      const mvs = document.createElement('script');
+      mvs.type = 'module';
+      mvs.dataset.mv = '1';
+      mvs.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+      document.head.appendChild(mvs);
+    }
+    let mv = document.getElementById('androidMV');
+    if(!mv){
+      mv = document.createElement('model-viewer');
+      mv.id = 'androidMV';
+      mv.setAttribute('ar', '');
+      mv.setAttribute('ar-modes', 'scene-viewer webxr');
+      mv.setAttribute('ar-placement', 'floor');
+      mv.setAttribute('camera-controls','');
+      mv.setAttribute('touch-action','none');
+      mv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;background:#000';
+      document.body.appendChild(mv);
+    }
+    mv.setAttribute('src', alien.glb);
+    // The key line: force the model to 1.78 meters tall regardless of how it was authored.
+    // model-viewer applies this before handing off to Scene Viewer.
+    mv.addEventListener('load', () => {
+      try {
+        const size = mv.getDimensions();           // current size in meters
+        const targetH = 1.78;                       // 5'10"
+        const factor = targetH / (size.y || 1);
+        mv.scale = `${factor} ${factor} ${factor}`;
+        setTimeout(() => mv.activateAR(), 80);
+      } catch(e) { try { mv.activateAR(); } catch(_){} }
+    }, { once:true });
   }
 });
 
